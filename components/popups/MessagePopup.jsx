@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
-
-import { Modal, View, Text, TouchableOpacity } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import { View, Text, TouchableOpacity, Animated } from "react-native";
 import Feather from "react-native-vector-icons/Feather";
 
 import { registerPopupTrigger } from "./PopupService";
@@ -12,6 +11,8 @@ const Popup = () => {
   const [text, setText] = useState("");
   const [duration, setDuration] = useState(3000);
 
+  const opacity = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     registerPopupTrigger(({ type, title, text, duration }) => {
       setType(type);
@@ -20,8 +21,20 @@ const Popup = () => {
       setDuration(duration);
       setVisible(true);
 
+      // Fade in
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+
+      // Fade out after the duration
       setTimeout(() => {
-        setVisible(false);
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => setVisible(false));
       }, duration);
     });
   }, []);
@@ -62,32 +75,42 @@ const Popup = () => {
   if (!visible) return null;
 
   return (
-    <Modal transparent visible={visible} animationType="fade">
-      <View className="absolute top-[8%] right-[-2%] w-full items-center">
-        <View
-          className={`relative w-11/12 max-w-sm rounded-lg px-4 py-3 ${getTypeStyles()}`}
+    <Animated.View
+      style={{
+        position: "absolute",
+        top: "8%",
+        right: "5%",
+        width: "90%",
+        alignItems: "center",
+        opacity: opacity, // Bind opacity to the Animated.Value
+        zIndex: 10,
+      }}
+    >
+      <View
+        className={`relative w-11/12 max-w-sm rounded-lg px-4 py-3 ${getTypeStyles()}`}
+      >
+        <Text className={`text-lg font-bold text-${getTextStyles()}`}>
+          {title}
+        </Text>
+        <Text className={`text-sm text-${getTextStyles()} mt-1 mb-3`}>
+          {text}
+        </Text>
+        <TouchableOpacity
+          onPress={() => {
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 300,
+              useNativeDriver: true,
+            }).start(() => setVisible(false));
+          }}
+          className={`absolute top-3 right-3 self-end rounded bg-${getTextStyles()}`}
         >
-          <Text className={`text-lg font-bold text-${getTextStyles()}`}>
-            {title}
+          <Text className={`font-semibold bg-${getTextStyles()}`}>
+            <Feather name="chevrons-right" size={20} color={getIconStyles()} />
           </Text>
-          <Text className={`text-sm text-${getTextStyles()} mt-1 mb-3`}>
-            {text}
-          </Text>
-          <TouchableOpacity
-            onPress={() => setVisible(false)}
-            className={`absolute top-3 right-3 self-end rounded bg-${getTextStyles()}`}
-          >
-            <Text className={`font-semibold bg-${getTextStyles()}`}>
-              <Feather
-                name="chevrons-right"
-                size={20}
-                color={getIconStyles()}
-              />
-            </Text>
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
       </View>
-    </Modal>
+    </Animated.View>
   );
 };
 

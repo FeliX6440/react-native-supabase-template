@@ -10,7 +10,7 @@ const Home = () => {
           await logOut();
         }}
       >
-        Home
+        Log out again
       </Text>
     </View>
   );
