@@ -1,8 +1,5 @@
-import { useContext } from "react";
-
 import { router } from "expo-router";
 import { supabase } from "./supabase";
-
 import { showPopup } from "../../components/popups/PopupService";
 
 export const signInWithPassword = async (setLoading, form) => {
@@ -13,16 +10,31 @@ export const signInWithPassword = async (setLoading, form) => {
   });
 
   if (error) {
-    console.error(error.message);
-    if (error.message == "Email not confirmed") {
+    showPopup({
+      type: "fail",
+      title: "Sign-In Failed",
+      text:
+        error.message === "Email not confirmed"
+          ? "Please confirm your email to proceed."
+          : "Failed to sign in. Please check your email and password.",
+      duration: 3000,
+    });
+
+    if (error.message === "Email not confirmed") {
       router.push({
         pathname: "verification-code",
         params: { email: form.email },
       });
     }
+
     setLoading(false);
   } else {
-    console.log("Signed in:", data);
+    showPopup({
+      type: "success",
+      title: "Signed In",
+      text: "You have successfully signed in.",
+      duration: 3000,
+    });
     router.push("/home");
   }
 };
@@ -41,10 +53,20 @@ export const signUpWithPassword = async (setLoading, form) => {
   });
 
   if (error) {
-    console.error(error.message);
+    showPopup({
+      type: "fail",
+      title: "Sign-Up Failed",
+      text: "Unable to create an account. Please try again.",
+      duration: 3000,
+    });
     setLoading(false);
   } else {
-    console.log("Signed up:", data);
+    showPopup({
+      type: "success",
+      title: "Sign-Up Successful",
+      text: "Account created. Please verify your email.",
+      duration: 3000,
+    });
     router.push({
       pathname: "verification-code",
       params: { email: form.email },
@@ -63,16 +85,25 @@ export const verifyCode = async (setLoading, code, email) => {
   });
 
   if (error) {
-    console.error("Verification failed:", error.message);
+    showPopup({
+      type: "fail",
+      title: "Verification Failed",
+      text: "Invalid verification code. Please try again.",
+      duration: 3000,
+    });
     setLoading(false);
   } else {
-    console.log("Account verified successfully!");
+    showPopup({
+      type: "success",
+      title: "Account Verified",
+      text: "Your account has been verified successfully!",
+      duration: 3000,
+    });
     router.push("/home");
   }
 };
 
 export const getNewCode = async (setLoading, email) => {
-  console.log(email);
   setLoading(true);
 
   const { error } = await supabase.auth.resend({
@@ -81,21 +112,31 @@ export const getNewCode = async (setLoading, email) => {
   });
 
   if (error) {
-    console.error("Failed to resend verification code:", error.message);
+    showPopup({
+      type: "fail",
+      title: "Resend Failed",
+      text: "Could not resend verification code. Please try again later.",
+      duration: 3000,
+    });
     setLoading(false);
   } else {
-    console.log("New verification code sent successfully!");
+    showPopup({
+      type: "success",
+      title: "Code Resent",
+      text: "A new verification code has been sent to your email.",
+      duration: 3000,
+    });
     setLoading(false);
   }
 };
 
 export const logOut = async () => {
-  //await supabase.auth.signOut();
-  //router.push("/sign-in");
+  await supabase.auth.signOut();
+  router.push("/sign-in");
   showPopup({
-    type: "succeass",
-    title: "Operation Complete",
-    text: "Your task was successful!",
+    type: "success",
+    title: "Logged Out",
+    text: "You have been logged out of your account - you can log back in at any time.",
     duration: 3000,
   });
 };
